@@ -3,8 +3,9 @@ from genericpath import isfile
 import os
 import shutil
 from typing import Dict, List
+import logging
 
-
+logging.basicConfig(filename='Cleanup.log', encoding='utf-8', level=logging.DEBUG)
 DESKTOP = r'C:/Users/jakem/Desktop'
 
 INCREMENT = 10  # number of days
@@ -46,14 +47,12 @@ def compare_date(date, file: str, created=True) -> None:
     delta = past_date - date
     if date < past_date:
         if created:
-            # if int(delta.days) >= DAYS_OLD_START and int(delta.days) <= DAYS_OLD_START + INCREMENT:
-            #     print(f"{file} is between this range")
-            print(f"File, {file} is older than {DAYS_OLD_START} days")
-            print(f"Created on: {date}")
-            print(f"{file} is {delta.days} days older than past date")
+            logging.info(f"File, {file} is older than {DAYS_OLD_START} days")
+            logging.info(f"Created on: {date}")
+            logging.info(f"{file} is {delta.days} days older than past date")
         else:
-            print(f"File, {file} is older than {DAYS_OLD_START} days")
-            print(f"Last modified on: {date}")
+            logging.info(f"File, {file} is older than {DAYS_OLD_START} days")
+            logging.info(f"Last modified on: {date}")
 
 
 def _older_than_start(date, file: str) -> int:
@@ -70,32 +69,31 @@ def find_oldest_file(files: Dict[str, int]) -> str:
     counter = 0
     oldest_file = ''
     for f in files:
-        # print(counter)
-        print(f"file {f}: days {files[f]}")
+        # logging.info(counter)
+        logging.info(f"file {f}: days {files[f]}")
         if files[f] > counter:
-            print(f"{files[f]} is greater than {counter}")
+            logging.info(f"{files[f]} is greater than {counter}")
             oldest_file = f
             counter = files[f]
-            print(f"Counter is now {counter}")
-    print(f"Oldest file is {oldest_file} at {counter} days")
+            logging.info(f"Counter is now {counter}")
+    logging.info(f"Oldest file is {oldest_file} at {counter} days")
 
 
 def create_folder(dest: str, name: str) -> None:
-    if os.path.exists(f"{dest}/{name}"):
-        print(f"{dest}/{name}, already exists")
-        return
-    else:
+    try:
         os.makedirs(f"{dest}/{name}")
+    except FileNotFoundError as err:
+        logging.error(f"{dest}/{name}, already exists: ERROR: {err}")
 
 
 def move_files(src: str, dst: str) -> ValueError:
     # Check for destination directory
     if os.path.exists(dst):
-        print(f"{dst} exists")
-        print(f"Moving {DESKTOP}/{src} to {DESKTOP}/{dst}")
+        logging.info(f"{dst} exists")
+        logging.info(f"Moving {DESKTOP}/{src} to {DESKTOP}/{dst}")
         shutil.move(f"{DESKTOP}/{src}", dst)
     else:
-        print(f"{dst} doent exists.")
+        logging.info(f"{dst} doent exists.")
 
 
 def main():
@@ -117,7 +115,7 @@ def main():
         
     for f in fileObj:
         if f in EXCLUDE:
-            print(f"Found {f}")
+            logging.info(f"Found {f}")
         if fileObj[f] >= folder_day_counter[0] and fileObj[f] < folder_day_counter[1]:
             move_files(f, folder_dst[0])
         elif fileObj[f] >= folder_day_counter[1] and fileObj[f] < folder_day_counter[2]:
